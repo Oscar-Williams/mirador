@@ -34,6 +34,10 @@ test("an empty conversation moves to another agent's profile, and once it has be
     await profile.selectOption({ label: "Radiance · opencode" });
     await expect(agent).toHaveText("opencode");
     await expect(page.locator(".timeline:visible")).toContainText("Now using opencode, with the profile “Radiance”");
+    const composer = page.locator(".composer textarea");
+    await composer.fill("/");
+    await expect(page.getByRole("listbox", { name: "Slash commands" }).locator(".slash-command-name", { hasText: /^\/review$/ })).toBeVisible({ timeout: 60_000 });
+    await composer.fill("");
     await sendMessage(page, "hello from opencode");
     await expect(page.locator(".message.agent:visible").last()).toContainText("hello from opencode");
     await waitForTurnToEnd(page);

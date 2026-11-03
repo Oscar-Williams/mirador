@@ -1837,6 +1837,7 @@ function Composer({
   const slashCommands = useSlashCommandMenu({
     conversationId: conversation.id,
     harness: conversation.harness,
+    profileId: conversation.profileId,
     events,
     text,
     setText,

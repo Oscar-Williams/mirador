@@ -1333,13 +1333,19 @@ export class Store {
 
   /**
    * The commands the agent last listed in this conversation, or else in another with the same agent and profile,
-   * this workspace's first: an agent lists them only once a session starts, which is after the first message.
+   * this workspace's first: an agent lists them only once a session starts, which is after the first message. A list
+   * from before a conversation moved to another agent is the agent's it left.
    */
   latestAvailableCommands({ id, workspaceId, harness, profileId }: Pick<Conversation, "id" | "workspaceId" | "harness" | "profileId">): AvailableCommand[] {
     const row = this.db
       .query(
         `SELECT e.event FROM events e JOIN conversations c ON c.id = e.conversation_id
          WHERE c.harness = ? AND c.profile_id IS ? AND json_extract(e.event, '$.update.sessionUpdate') = 'available_commands_update'
+           AND NOT EXISTS (
+             SELECT 1 FROM events later
+             WHERE later.conversation_id = e.conversation_id AND later.seq > e.seq
+               AND json_extract(later.event, '$.type') = 'profile-changed' AND json_extract(later.event, '$.agent') IS NOT NULL
+           )
          ORDER BY c.id = ? DESC, c.workspace_id = ? DESC, e.at DESC, e.seq DESC LIMIT 1`,
       )
       .get(harness, profileId, id, workspaceId) as { event: string } | null;
